@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" title>
+    <head>
+        <meta charset="UTF-8">
+        <title>CONE</title>
+    </head>
+    <body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<label for="coneRadius">Радиус конуса:</label>
+<input type="number" id="coneRadius" value="1"><br>
+
+<label for="coneHeight">Высота конуса:</label>
+<input type="number" id="coneHeight" value="2"><br>
+
+<label for="coneSegments">Сегменты на окружности:</label>
+<input type="number" id="coneSegments" value="32"><br>
+
+<div id="scene-container"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+    
+    const sceneContainer = document.getElementById("scene-container");
+
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
+
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    sceneContainer.appendChild(renderer.domElement);
+
+    const geometry = new THREE.ConeGeometry(1, 2, 32);
+    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const cone = new THREE.Mesh(geometry, material);
+    scene.add(cone);
+
+    function updateCone() {
+      const radius = parseFloat(document.getElementById("coneRadius").value);
+      const height = parseFloat(document.getElementById("coneHeight").value);
+      const segments = parseInt(document.getElementById("coneSegments").value);
+  
+      cone.geometry = new THREE.ConeGeometry(radius, height, segments);
+    }
+
+    document.getElementById("coneRadius").addEventListener("input", updateCone);
+    document.getElementById("coneHeight").addEventListener("input", updateCone);
+    document.getElementById("coneSegments").addEventListener("input", updateCone);
+    document.getElementById("coneRadius").addEventListener("input", () => {
+      updateCone();
+      socket.emit("updateCone", { radius: parseFloat(document.getElementById("coneRadius").value) });
+  });
+
+  document.getElementById("coneHeight").addEventListener("input", () => {
+      updateCone();
+      socket.emit("updateCone", { height: parseFloat(document.getElementById("coneHeight").value) });
+  });
+
+  document.getElementById("coneSegments").addEventListener("input", () => {
+      updateCone();
+      socket.emit("updateCone", { segments: parseInt(document.getElementById("coneSegments").value) });
+  });
+
+  socket.on("updateCone", (data) => {
+      if (data.radius !== undefined) {
+          document.getElementById("coneRadius").value = data.radius;
+      }
+      if (data.height !== undefined) {
+          document.getElementById("coneHeight").value = data.height;
+      }
+      if (data.segments !== undefined) {
+          document.getElementById("coneSegments").value = data.segments;
+      }
+      updateCone();
+  });
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      cone.rotation.x += 0.01;
+      cone.rotation.y += 0.01;
+  
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+  
+
+    </body>
+</html>
